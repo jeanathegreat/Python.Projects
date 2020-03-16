@@ -1,28 +1,28 @@
 #here lies the blue print for the class description
+from datetime import datetime as dt
+
 class Navps:
     """
     Navps object with date and prices of the different unit trust funds for that date
     """
 
-    def __init__(self, date, bond, balanced, equity, market, gs, dynamic, index,
-                 advantage, abundance, wellspring, voyager, starter,
-                 a28=None, a38=None, a48=None):
-        self.date = date
-        self.bond = bond
-        self.balanced = balanced
-        self.equity = equity
-        self.market = market
-        self.gs = gs
-        self.dynamic = dynamic
-        self.index = index
-        self.advantage = advantage
-        self.abundance = abundance
-        self.wellspring = wellspring
-        self.voyager = voyager
-        self.starter = starter
-        self.a28 = a28 if a28 is not None else 0
-        self.a38 = a38 if a38 is not None else 0
-        self.a48 = a48 if a48 is not None else 0
+    def __init__(self):
+        self.date = 0
+        self.bond = 0
+        self.balanced = 0
+        self.equity = 0
+        self.market = 0
+        self.gs = 0
+        self.dynamic = 0
+        self.index = 0
+        self.advantage = 0
+        self.abundance = 0
+        self.wellspring = 0
+        self.voyager = 0
+        self.starter = 0
+        self.a28 = 0
+        self.a38 = 0
+        self.a48 = 0
 
     def updateItem(self, attr, val):
         return setattr(self, attr, val)
@@ -47,3 +47,45 @@ class Navps:
         print(f"* Achiever 2028 Fund: {self.a28}")
         print(f"* Achiever 2038 Fund: {self.a38}")
         print(f"* Achiever 2048 Fund: {self.a48}")
+
+    def add(self, value, list):
+        if isinstance(value, dt):
+            self.date = value
+        elif ":" in value:
+            temp = value.split(":")
+            if temp[0].casefold().find("bond"):
+                self.updateItem("bond", temp[1])
+            elif temp[0].casefold().find("balanced"):
+                self.updateItem("balanced", temp[1])
+            elif temp[0].casefold().find("equity"):
+                self.updateItem("equity", temp[1])
+            elif temp[0].casefold().find("market"):
+                self.updateItem("market", temp[1])
+            elif temp[0].casefold().find("gs"):
+                self.updateItem("gs", temp[1])
+            elif temp[0].casefold().find("dynamic"):
+                self.updateItem("dynamic", temp[1])
+            elif temp[0].casefold().find("index"):
+                self.updateItem("index", temp[1])
+            elif temp[0].casefold().find("advantage"):
+                self.updateItem("advantage", temp[1])
+            elif temp[0].casefold().find("abundance"):
+                self.updateItem("abundance", temp[1])
+            elif temp[0].casefold().find("wellspring"):
+                self.updateItem("wellspring", temp[1])
+            elif temp[0].casefold().find("voyager"):
+                self.updateItem("voyager", temp[1])
+            elif temp[0].casefold().find("starter"):
+                self.updateItem("starter", temp[1])
+            elif temp[0].casefold().find("2028"):
+                self.updateItem("a28", temp[1])
+            elif temp[0].casefold().find("2038"):
+                self.updateItem("a38", temp[1])
+            elif temp[0].casefold().find("2048"):
+                self.updateItem("a48", temp[1])
+            else:
+                pass
+        else:
+            pass
+
+        list.append(self)

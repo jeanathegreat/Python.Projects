@@ -1,8 +1,12 @@
-import email, getpass, imaplib, os, re
-from matplotlib import pyplot as plt
+import email
+import imaplib
+from datetime import datetime as dt
+import csv
+from pathlib import Path
+
 from NavpsModule import Navps
 
-detach_dir = "‎~/Documents/08_PYTHON/00_PROJECTS/PyCharm"
+
 
 user = input("Enter gmail address: ")
 pwd = getpass.getpass("Enter password: ")
@@ -19,10 +23,8 @@ print(m)
 m.select("Personal/NAVPS-Sunlife")
 resp, items = m.search(None, '(FROM "phil_mfonline@sunlife.com")')
 mailIdItems = items[0].split()
-print(f"items\n{items}")
-print(f"mailIdItems\n{mailIdItems}")
 
-my_rawmsgs = [] # store relevant msgs here in please
+my_rawmsgs = [] # store relevant msgs here please
 my_msgs = []
 msg_cnt = 0
 break_ = False
@@ -31,10 +33,9 @@ break_ = False
 #mailIdItems = [ int(x) for x in mailIdItems ]
 
 if resp=='OK':
-    for i in mailIdItems[:11:]:
+    for i in mailIdItems[::]:
         #gets the body from emails with the id in mailIdItems
         type, data = m.fetch(i, "(BODY.PEEK[TEXT])")
-        print(data)
         #data[0][1] means idk
         my_rawmsgs.append(email.message_from_bytes(data[0][1]))
 
@@ -48,36 +49,133 @@ if resp=='OK':
 else:
     print("Error fetching emails.")
 
-#for i in my_msgs:
-    #print(f"my_msgs{i}")
 
-navpsdict = []
+navsplist = []
+ntemp = []
+
+#clean list of my_msgs to only get date and fundnames and values
 for msg in my_msgs:
     for i, word in enumerate(msg):
         print(f"i: {i}\tword: {word}")
         if word.endswith(".</p>"):
-            navpsdict.append(word)
+
+            #split the .</p> from the date
+            temp = word.split(".")
+            print(temp[0])
+            #date string to datetime object
+            dateobj = dt.strptime(temp[0], '%m/%d/%Y')
+            navsplist.append(dateobj)
+            nav = Navps()
+            nav.updateItem("date", dateobj)
+            nav.add(dateobj, ntemp)
         if word.endswith("<br>"):
-            navpsdict.append(msg[i-2] + msg[i-1] + msg[i])
+            #split the <br> from the fund types and values
+            temp=word.split("<")
+            #fund was found in the word before the word ending in <br>
+            if msg[i-1].casefold().find("fund") == 0:
+                strtemp = msg[i-2] + msg[i-1] + temp[0]
+                navsplist.append(strtemp)
+                nav = Navps()
+                nav.add(strtemp, ntemp)
 
 
-#print(navpsdict)
 
-navpsobj = Navps("01/16/2019",
-                 3.1157,
-                 3.5618,
-                 3.6747,
-                 1.2716,
-                 1.7159,
-                 0.8817,
-                 0.8790,
-                 3.8082,
-                 3.2896,
-                 1.1221,
-                 1.3090,
-                 1.0407)
+print(len(my_msgs) == len(my_rawmsgs))
+print(navsplist)
 
-print(navpsobj.printAttr())
-navpsobj.updateItem("bond", 3.4567)
-print(navpsobj.getItem("bond"))
-print(navpsobj.printAttr())
+datestr = "01/16/2019"
+dtobj = dt.strptime(datestr,'%m/%d/%Y')
+print(isinstance(dtobj, dt))
+
+#given list create a csv of the ff data:
+#bondfund.csv [(date1, bfvalue2),(date2, bfvalue2),...]
+#balancedfund.csv [(date1, bfvalue2),(date2, bfvalue2),...]
+#equityfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#marketfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#gsfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#dynamicfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#indexfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#advantagefund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#abundancefund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#wellspringfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#voyagerfund.csv [(date1, efvalue2),(date2, efvalue2),...]
+#starter.csv [(date1, efvalue2),(date2, efvalue2),...]
+
+choices = {"bof":"bondfund.csv",
+           "baf":"balancedfund.csv",
+           "ef":"equityfund.csv",
+           "mf":"marketfund.csv",
+           "gf":"gsfund.csv",
+           "df":"dynamicfund.csv",
+           "inf":"indexfund.csv",
+           "adf":"advantagefund.csv",
+           "abf":"abundancefund.csv",
+           "wf":"wellspringfund.csv",
+           "vf":"voyagerfund.csv",
+           "sf":"starterfund.csv",
+           "a28":"a2028fund.csv",
+           "a38":"a2038fund.csv",
+           "a48":"a2048fund.csv"}
+
+funds = ['bof','baf','ef','mf','gf','df','inf','adf','abf','wf','vf','sf','a28','a38','a48']
+
+bof = choices.get(funds[0], "default")
+baf = "balancedfund.csv"
+ef = "equityfund.csv"
+mf = "marketfund.csv"
+gf = "gsfund.csv"
+df = "dynamicfund.csv"
+inf = "indexfund.csv"
+adf = "advantagefund.csv"
+abf = "abundancefund.csv"
+wf = "wellspringfund.csv"
+vf = "voyagerfund.csv"
+sf = "starterfund.csv"
+a28 = "a2028fund.csv"
+
+
+
+def create_dict_from_list(option, strlist):
+    #how you would do switch in python
+    result = choices.get(option, "default")
+    resultfund = result.split("fund")
+    dicts = {}
+    dateFound = False
+    fundvalue = 0
+    date = None
+    for item in strlist:
+        if isinstance(item, dt) == True:
+            date = item
+            dateFound = True
+            continue
+
+
+        if item.casefold().find(resultfund[0]) == 0:
+            if dateFound == True:
+                itemlist = item.split(":")
+                fundvalue = itemlist[1]
+                dicts[date] = fundvalue
+                dateFound = False
+                fundvalue = 0
+        #else: #need to process what to do with other fund values
+
+    return dicts
+
+def create_csv_from_dict(option, dicttocsv):
+    result = choices.get(option, "default")
+    csv_columns = ['Date', 'Fund Value']
+    detach_dir = Path("output/")
+    newcsvfile = detach_dir/result
+    try:
+        with open(newcsvfile, 'w') as csvfile:
+            writer = csv.writer(csvfile)
+            writer.writerow(csv_columns)
+            for key, value in dicttocsv.items():
+                writer.writerow([key, value])
+    except IOError:
+        print("I/O error")
+
+for fund in funds[:-3]:
+    csvdict = create_dict_from_list(fund, navsplist)
+    create_csv_from_dict(fund, csvdict)
+print(csvdict)
