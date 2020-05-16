@@ -1,13 +1,13 @@
+import csv
 import email
 import imaplib
+import time
 from datetime import datetime as dt
-import csv
 from pathlib import Path
 
 from NavpsModule import Navps
 
-
-
+start_time = time.time()
 user = input("Enter gmail address: ")
 pwd = getpass.getpass("Enter password: ")
 
@@ -179,3 +179,5 @@ for fund in funds[:-3]:
     csvdict = create_dict_from_list(fund, navsplist)
     create_csv_from_dict(fund, csvdict)
 print(csvdict)
+
+print(f"time elapsed: {format(time.time() - start_time)}s")
